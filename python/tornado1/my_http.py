@@ -2,12 +2,14 @@
 
 import tornado.httpserver, tornado.ioloop, tornado.options, tornado.web, os.path, random, string
 from tornado.options import define, options
+from tornado import gen
 from api import ApiHandle
+from tornado.httpclient import AsyncHTTPClient
 import os
 import logging
 import time
 import sys
-from roy_py.util.logger_template import LoggerTemplate
+
 
 from config import HttpConfig
 
@@ -25,8 +27,8 @@ def parse_port():
 class Application(tornado.web.Application):
     def __init__(self):
         handlers = [
-            (r"/", IndexHandler),
-            (r"/api", ApiHandle)
+            (r"/", NoDelay),
+            (r"/Delay", Delay)
         ]
         tornado.web.Application.__init__(self, handlers)
 
@@ -34,6 +36,23 @@ class Application(tornado.web.Application):
 class IndexHandler(tornado.web.RequestHandler):
     def get(self):
         self.write("Sorry, this page is intentionally left blank")
+
+
+class Delay(tornado.web.RequestHandler):
+    @gen.coroutine
+    def get(self):
+        http_client = AsyncHTTPClient()
+        response = yield http_client.fetch("http://www.whut.edu.cn/")
+        time.sleep(2)
+        self.write("OK")
+
+
+class NoDelay(tornado.web.RequestHandler):
+    @gen.coroutine
+    def get(self):
+        http_client = AsyncHTTPClient()
+        response = yield http_client.fetch("http://example.com")
+        self.write("OK")
 
 
 def main():
